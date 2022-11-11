@@ -1,0 +1,32 @@
+Traverse tree in browser
+paste new link into current directory
+
+struct bookmark
+{
+	int id
+	int folderId
+	str title
+	str url
+	str comment
+	int index
+}
+
+struct folder
+{
+	int id
+	int parentId
+	str title
+	int index
+}
+
+db.list(path) -> list<[bookmark, folder]>
+
+db.addBookmark(path, url) -> bookmark
+db.getBookmark(id) -> bookmark
+db.updateBookmark(bookmark)
+db.removeBookmark(id)
+
+db.addFolder(parentId, title) -> folder
+db.getFolder(path) -> folder
+db.updateFolder(folder)
+db.removeFolder(id)
