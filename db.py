@@ -21,6 +21,17 @@ class Folder:
 root_folder = Folder(0, None, "")
 
 
+class Context:
+    def __enter__(self):
+        self.conn = sqlite3.connect("bm.sqlite")
+        self.cursor = self.conn.cursor()
+        return self.cursor
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.conn.commit()
+        self.conn.close()
+
+
 def reassign_sort_keys(parent_id: int):
     pass
 
@@ -101,12 +112,12 @@ def update_folder(cur: sqlite3.Cursor, folder: Folder):
     )
 
 
-def remove_folder(cur: sqlite3.Cursor, folder_id: int):
+def delete_folder(cur: sqlite3.Cursor, folder_id: int):
     res = cur.execute(
         "SELECT bookmark_id FROM bookmarks WHERE folder_id = ?;", (folder_id,)
     )
     for row in res.fetchall():
-        remove_bookmark(cur, row[0])
+        delete_bookmark(cur, row[0])
     cur.execute("DELETE FROM folders_order WHERE folder_id = ?;", (folder_id,))
     cur.execute("DELETE FROM folders WHERE folder_id = ?;", (folder_id,))
 
@@ -126,7 +137,7 @@ def move_bookmark_to_bottom(cur: sqlite3.Cursor, bookmark_id: int, folder_id: in
 
 def add_bookmark(cur: sqlite3.Cursor, folder_id: int, title: str, url: str) -> int:
     cur.execute(
-        "INSERT INTO bookmarks(folder_id, title, url) VALUES(?, ?, ?);",
+        "INSERT INTO bookmarks(folder_id, title, url, comment) VALUES(?, ?, ?, '');",
         (folder_id, title, url),
     )
     bookmark_id = cur.lastrowid
@@ -158,7 +169,7 @@ def update_bookmark(cur: sqlite3.Cursor, bookmark: Bookmark):
     )
 
 
-def remove_bookmark(cur: sqlite3.Cursor, bookmark_id: int):
+def delete_bookmark(cur: sqlite3.Cursor, bookmark_id: int):
     cur.execute("DELETE FROM bookmarks_order WHERE bookmark_id = ?;", (bookmark_id,))
     cur.execute("DELETE FROM bookmarks WHERE bookmark_id = ?;", (bookmark_id,))
 

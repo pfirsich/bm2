@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>bm</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-size: 14px;
+      line-height: 1.5em;
+      max-width: 1000px;
+      margin: 10px auto;
+      padding: 10px;
+    }
+
+    .newline {
+      padding: 5px 5px 10px 10px;
+      border-bottom: 1px solid;
+      display: flex;
+      justify-content: stretch;
+    }
+
+    .newline__input-wrapper {
+      flex-grow: 1;
+    }
+
+    .newline__input {
+      width: 100%;
+    }
+
+    .newline__buttons {
+      display: flex;
+      margin-left: auto;
+    }
+
+    .newline__button {
+      display: block;
+      width: 120px;
+      margin-left: 5px;
+    }
+
+    .breadcrumbs {
+      margin: 10px;
+    }
+
+    .entry {
+      margin: 3px;
+      padding: 3px;
+      display: flex;
+    }
+
+    .entry:nth-child(even) {
+      background-color: #f4f4f4;
+    }
+
+    .entry__title {
+      padding: 0 5px;
+    }
+
+    .entry__comment {
+      font-weight: lighter;
+      /*font-size: 11px;*/
+      font-style: italic;
+      padding: 0 5px;
+    }
+
+    .entry__comment--empty {
+      color: #bbb;
+    }
+
+    .entry__button {
+      border: none;
+    }
+
+    .entry__button-move {
+      cursor: move;
+    }
+
+    .entry__button-title-edit,
+    .entry__button-comment-edit {
+      border: none;
+      background-color: inherit;
+      cursor: pointer;
+    }
+
+    .entry__buttons-right {
+      margin-left: auto;
+    }
+
+    .entry__input-title,
+    .entry__button-title-submit,
+    .entry__input-comment,
+    .entry__button-comment-submit {
+      display: none;
+    }
+
+  </style>
+  <script>
+    function moveEntry(entry) {
+      console.log("moveEntry", entry);
+    }
+
+    function editTitle(entry) {
+      entry.querySelector(".entry__input-title").value = entry.querySelector(".entry__title").innerHTML;
+
+      entry.querySelector(".entry__title").style.display = "none";
+      entry.querySelector(".entry__button-title-edit").style.display = "none";
+
+      entry.querySelector(".entry__input-title").style.display = "inline";
+      entry.querySelector(".entry__button-title-submit").style.display = "inline";
+    }
+
+    function submitTitle(entry) {
+      const entryType = entry.getAttribute("data-entry-type");
+      const entryId = entry.getAttribute("data-" + entryType + "-id");
+
+      entry.querySelector(".entry__title").innerHTML = entry.querySelector(".entry__input-title").value;
+
+      entry.querySelector(".entry__input-title").style.display = "none";
+      entry.querySelector(".entry__button-title-submit").style.display = "none";
+
+      entry.querySelector(".entry__title").style.display = "inline";
+      entry.querySelector(".entry__button-title-edit").style.display = "inline";
+    }
+
+    function editComment(entry) {
+      entry.querySelector(".entry__input-comment").value = entry.querySelector(".entry__comment").innerHTML;
+
+      entry.querySelector(".entry__comment").style.display = "none";
+      entry.querySelector(".entry__button-comment-edit").style.display = "none";
+
+      entry.querySelector(".entry__input-comment").style.display = "inline";
+      entry.querySelector(".entry__button-comment-submit").style.display = "inline";
+    }
+
+    function submitComment(entry) {
+      const entryType = entry.getAttribute("data-entry-type");
+      const entryId = entry.getAttribute("data-" + entryType + "-id");
+
+      entry.querySelector(".entry__comment").innerHTML = entry.querySelector(".entry__input-comment").value;
+
+      entry.querySelector(".entry__input-comment").style.display = "none";
+      entry.querySelector(".entry__button-comment-submit").style.display = "none";
+
+      entry.querySelector(".entry__comment").style.display = "inline";
+      entry.querySelector(".entry__button-comment-edit").style.display = "inline";
+    }
+
+    function deleteEntry(entry) {
+      const entryType = entry.getAttribute("data-entry-type");
+      const entryId = entry.getAttribute("data-" + entryType + "-id");
+
+      const request = new XMLHttpRequest();
+      let url = "";
+      if (entryType == "bookmark") {
+        url = "/bookmarks/" + entryId;
+      } else if (entryType == "folder") {
+        url = "/folders/" + entryId;
+      }
+      request.open("DELETE", url);
+      request.send();
+
+      entry.remove();
+    }
+
+    function registerOnClick(entry, buttonSelector, func) {
+      const button = entry.querySelector(buttonSelector);
+      if (button != null) {
+        button.addEventListener("click", function () {
+          func(entry);
+        });
+      }
+    }
+
+    function dragStart(e) {
+      dragged = e.target;
+    }
+
+    function dragEnter(e) {
+      e.preventDefault();
+      e.target.parentNode.insertBefore(dragged, e.target);
+    }
+
+    function drop(e) {
+      console.log("dropped!");
+    }
+
+    window.addEventListener("load", function () {
+      for (let entry of document.querySelectorAll(".entry")) {
+        registerOnClick(entry, ".entry__button-move", moveEntry);
+        registerOnClick(entry, ".entry__button-title-edit", editTitle);
+        registerOnClick(entry, ".entry__button-title-submit", submitTitle);
+        registerOnClick(entry, ".entry__button-comment-edit", editComment);
+        registerOnClick(entry, ".entry__button-comment-submit", submitComment);
+        registerOnClick(entry, ".entry__button-delete", deleteEntry);
+
+        entry.draggable = true;
+        entry.addEventListener("dragstart", dragStart);
+        entry.addEventListener('dragenter', dragEnter)
+        entry.addEventListener('drop', drop);
+      }
+    })
+  </script>
+</head>
+
+<body>
+  <form method="post">
+    <div class="newline">
+      <div class="newline__input-wrapper">
+        <input class="newline__input" type="text" name="input">
+      </div>
+      <div class="newline__buttons">
+        <div>
+          <button class="newline__button newline__button-new-bookmark" type="submit"
+            formaction="/bookmarks/{{ path }}">New Bookmark</button>
+        </div>
+        <div>
+          <button class="newline__button newline__button-new_folder" type="submit" formaction="/folders/{{ path }}">New
+            Folder</button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="breadcrumbs">
+    {% for crumb in breadcrumbs %}
+    <a class="breadcrumbs__item" href="{{ crumb.link }}">{{ crumb.title }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="entries">
+    {% for entry in entries %}
+    {% if entry.bookmark_id %}
+    <div class="entry entry--bookmark" data-entry-type="bookmark" data-bookmark-id="{{ entry.bookmark_id }}">
+      <a class="entry__title" target="_blank" href="{{ entry.url }}/">{{ entry.title }}</a>
+      <button class="entry__button-title-edit" type="button">&#128221;</button>
+      <input class="entry__input-title" type="text" name="title">
+      <button class="entry__button-title-submit" type="button">&#10004;&#65039;</button>
+
+      {% if entry.comment != "" %}
+      <span class="entry__comment">{{ entry.comment }}</span>
+      {% else %}
+      <span class="entry__comment entry__comment--empty">no comment</span>
+      {% endif %}
+      <button class="entry__button-comment-edit" type="button">&#128221;</button>
+      <input class="entry__input-comment" type="text" name="comment">
+      <button class="entry__button-comment-submit" type="button">&#10004;&#65039;</button>
+
+      <div class="entry__buttons-right">
+        <button class="entry__button-delete" type="button">&#10060;</button>
+      </div>
+    </div>
+    {% else %}
+    <div class="entry entry--folder" data-entry-type="folder" data-folder-id="{{ entry.folder_id }}">
+      <!--<button class="entry__button-move" type="button">&#8597;&#65039;</button>-->
+
+      <a class="entry__title" href="{{ entry.title }}">{{ entry.title }}</a>
+      <button class="entry__button-title-edit" type="button">&#128221;</button>
+      <input class="entry__input-title" type="text" name="title">
+      <button class="entry__button-title-submit" type="button">&#10004;&#65039;</button>
+
+      <div class="entry__buttons-right">
+        <button class="entry__button-delete" type="button">&#10060;</button>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</body>
+
+</html>
