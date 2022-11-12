@@ -30,3 +30,52 @@ db.addFolder(parentId, title) -> folder
 db.getFolder(path) -> folder
 db.updateFolder(folder)
 db.removeFolder(id)
+
+GET /api/entries/<path>
+{
+	"folder_id": 0,
+	entries: [
+		{
+			"type": "folder",
+			"folder_id": 1,
+			"title": "a"
+		},
+		{
+			"type": "bookmark",
+			"bookmark_id": 0,
+			"title": "Home >> theshoemaker",
+			"url": "https://theshoemaker.de",
+			"comment": ""
+		}
+	]
+}
+
+POST /api/bookmarks/<path>
+{
+	"type": "bookmark"
+	"url": "theshoemaker.de"
+}
+=>
+{
+	"bookmark_id": 0,
+	"folder_id": 0,
+	"title": "Home >> theshoemaker.de",
+	"url": "https://theshoemaker.de",
+	"comment": "",
+}
+
+POST /api/folders/<path>
+{
+	"type": "folder"
+	"title": "b folder"
+}
+=>
+{
+	"folder_id": 1,
+	"parent_id": 0,
+	"title": "b folder",
+}
+
+DELETE /api/bookmarks/<id>
+
+DELETE /api/folders/<id>
