@@ -6,6 +6,11 @@ CREATE TABLE IF NOT EXISTS folders(
     FOREIGN KEY(parent_id) REFERENCES folders(folder_id)
 );
 
+-- These are in separate tables, so I can change it more easily later.
+-- See here for future methods:
+-- https://begriffs.com/posts/2018-03-20-user-defined-order.html
+-- https://news.ycombinator.com/item?id=16635440
+-- https://news.ycombinator.com/item?id=25797674
 CREATE TABLE IF NOT EXISTS folders_order(
     folder_id INTEGER PRIMARY KEY,
     sort_key INTEGER,
