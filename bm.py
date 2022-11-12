@@ -70,29 +70,3 @@ def delete_bookmarks(bookmark_id):
     with db.Context() as cur:
         db.delete_bookmark(cur, bookmark_id)
     return ""
-
-
-def main():
-    with db.Context() as cur:
-        with open("schema.sql") as f:
-            cur.executescript(f.read())
-
-        if len(db.list_entries(cur, "/")) == 0:
-            a_id = db.add_folder(cur, 0, "a")
-            bookmark_url(cur, a_id, "theshoemaker.de")
-            aa_id = db.add_folder(cur, a_id, "aa")
-            db.add_bookmark(cur, aa_id, "aa bookmark", "pfirsich.dev")
-
-            b_id = db.add_folder(cur, 0, "b")
-            db.add_bookmark(cur, b_id, "ab bookmark", "joelschumacher.de")
-
-            c_id = db.add_folder(cur, 0, "c")
-            db.add_bookmark(cur, b_id, "ab bookmark", "joelschumacher.de")
-            db.remove_folder(cur, c_id)
-
-        for e in db.list_entries(cur, "/a"):
-            print(e)
-
-
-if __name__ == "__main__":
-    main()
