@@ -18,14 +18,21 @@ CREATE TABLE IF NOT EXISTS folders_order(
     FOREIGN KEY(folder_id) REFERENCES folders(folder_id)
 );
 
+CREATE TABLE IF NOT EXISTS favicons(
+    favicon_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    data_url TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS bookmarks(
     bookmark_id INTEGER PRIMARY KEY AUTOINCREMENT,
     folder_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     url TEXT NOT NULL,
     comment TEXT,
+    favicon_id INTEGER,
 
-    FOREIGN KEY(folder_id) REFERENCES folders(folder_id)
+    FOREIGN KEY(folder_id) REFERENCES folders(folder_id),
+    FOREIGN KEY(favicon_id) REFERENCES favicons(favicon_id)
 );
 
 CREATE TABLE IF NOT EXISTS bookmarks_order(

@@ -9,6 +9,7 @@ class Bookmark:
     title: str
     url: str
     comment: str
+    favicon_data_url: str
 
 
 @dataclass
@@ -122,6 +123,11 @@ def delete_folder(cur: sqlite3.Cursor, folder_id: int):
     cur.execute("DELETE FROM folders WHERE folder_id = ?;", (folder_id,))
 
 
+def add_favicon(cur: sqlite3.Cursor, data_url: str) -> int:
+    cur.execute("INSERT INTO favicons(data_url) VALUES (?);", (data_url,))
+    return cur.lastrowid
+
+
 def move_bookmark_to_bottom(cur: sqlite3.Cursor, bookmark_id: int, folder_id: int):
     sort_key = get_last_sort_key(cur, folder_id)
     cur.execute(
@@ -135,25 +141,38 @@ def move_bookmark_to_bottom(cur: sqlite3.Cursor, bookmark_id: int, folder_id: in
     )
 
 
-def add_bookmark(cur: sqlite3.Cursor, folder_id: int, title: str, url: str) -> int:
+def add_bookmark(
+    cur: sqlite3.Cursor, folder_id: int, title: str, url: str, favicon_id: int = None
+) -> int:
     cur.execute(
-        "INSERT INTO bookmarks(folder_id, title, url, comment) VALUES(?, ?, ?, '');",
-        (folder_id, title, url),
+        "INSERT INTO bookmarks(folder_id, title, url, comment, favicon_id) VALUES(?, ?, ?, '', ?);",
+        (folder_id, title, url, favicon_id),
     )
     bookmark_id = cur.lastrowid
     move_bookmark_to_bottom(cur, bookmark_id, folder_id)
     return bookmark_id
 
 
+def get_favicon(cur: sqlite3.Cursor, favicon_id: int | None) -> int | None:
+    if favicon_id is None:
+        return None
+    fres = cur.execute(
+        "SELECT data_url FROM favicons WHERE favicon_id = ?;", (favicon_id,)
+    )
+    return fres.fetchone()[0]
+
+
 def get_bookmark(cur: sqlite3.Cursor, bookmark_id: int) -> Bookmark:
     res = cur.execute(
-        "SELECT folder_id, title, url, comment FROM bookmarks WHERE bookmark_id = ?;",
+        "SELECT folder_id, title, url, comment, favicon_id FROM bookmarks WHERE bookmark_id = ?;",
         (bookmark_id,),
     )
     row = res.fetchone()
     if row is None:
         raise ValueError("bookmark_id does not exist")
-    return Bookmark(bookmark_id, row[0], row[1], row[2], row[3])
+    return Bookmark(
+        bookmark_id, row[0], row[1], row[2], row[3], get_favicon(cur, row[4])
+    )
 
 
 def update_bookmark(cur: sqlite3.Cursor, bookmark: Bookmark):
@@ -189,18 +208,32 @@ def list_entries(
     )
     entries = [(row[2], Folder(row[0], folder_id, row[1])) for row in fres.fetchall()]
 
+    if folders_first:
+        entries.sort(key=lambda e: e[0])
+
     bres = cur.execute(
         """
-        SELECT b.bookmark_id, title, url, comment, sort_key FROM bookmarks AS b
+        SELECT b.bookmark_id, title, url, comment, favicon_id, sort_key FROM bookmarks AS b
             INNER JOIN bookmarks_order AS bo ON b.bookmark_id = bo.bookmark_id
             WHERE folder_id = ?;
         """,
         (folder_id,),
     )
-    entries.extend(
-        (row[4], Bookmark(row[0], folder_id, row[1], row[2], row[3]))
+    bookmarks = [
+        (
+            row[5],
+            Bookmark(
+                row[0], folder_id, row[1], row[2], row[3], get_favicon(cur, row[4])
+            ),
+        )
         for row in bres.fetchall()
-    )
+    ]
 
-    entries.sort(key=lambda e: e[0])
+    if folders_first:
+        bookmarks.sort(key=lambda e: e[0])
+        entries.extend(bookmarks)
+    else:
+        entries.extend(bookmarks)
+        entries.sort(key=lambda e: e[0])
+
     return [e[1] for e in entries]

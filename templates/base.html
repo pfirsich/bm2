@@ -57,6 +57,11 @@
       background-color: #f4f4f4;
     }
 
+    .entry__favicon {
+      width: 1.5em;
+      height: 1.5em;
+    }
+
     .entry__title {
       padding: 0 5px;
     }
@@ -236,6 +241,10 @@
     {% for entry in entries %}
     {% if entry.bookmark_id %}
     <div class="entry entry--bookmark" data-entry-type="bookmark" data-bookmark-id="{{ entry.bookmark_id }}">
+      {% if entry.favicon_data_url %}
+      <img class="entry__favicon" src="{{ entry.favicon_data_url }}">
+      {% endif %}
+
       <a class="entry__title" target="_blank" href="{{ entry.url }}/">{{ entry.title }}</a>
       <button class="entry__button-title-edit" type="button">&#128221;</button>
       <input class="entry__input-title" type="text" name="title">
